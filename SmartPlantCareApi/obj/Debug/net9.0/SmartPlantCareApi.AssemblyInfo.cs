@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SmartPlantCareApi")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+93623971bae2f7138b22d1311e13022ad0fce637")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e8d607995cee58593b80baf2e823a24a87d7e9ab")]
 [assembly: System.Reflection.AssemblyProductAttribute("SmartPlantCareApi")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SmartPlantCareApi")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

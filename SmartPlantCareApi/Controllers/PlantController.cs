@@ -30,6 +30,13 @@ namespace SmartPlantCareApi.Controllers
             return plant;
         }
 
+        [HttpGet("ping")]
+        public IActionResult Ping()
+        {
+            return Ok("Ping successful");
+        }
+
+
         [HttpPost]
         public async Task<IActionResult> Post(Plant newPlant)
         {
