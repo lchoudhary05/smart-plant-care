@@ -1,6 +1,133 @@
-@SmartPlantCareApi_HostAddress = http://localhost:5177
+### Test JWT Authentication
 
-GET {{SmartPlantCareApi_HostAddress}}/weatherforecast/
-Accept: application/json
+# 1. Register a new user
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123",
+  "firstName": "John",
+  "lastName": "Doe"
+}
 
 ###
+
+# 2. Login with the user
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "password": "password123"
+}
+
+###
+
+# 3. Get user profile (requires JWT token)
+GET {{baseUrl}}/api/auth/profile
+Authorization: Bearer {{authToken}}
+
+###
+
+# 4. Create a new plant (requires JWT token)
+POST {{baseUrl}}/api/plant
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Monstera Deliciosa",
+  "species": "Monstera",
+  "wateringFrequencyDays": 7,
+  "sunlight": "Bright indirect",
+  "location": "Living room",
+  "notes": "Beautiful split-leaf philodendron",
+  "fertilizingFrequencyDays": 30
+}
+
+###
+
+# 5. Get user's plants (requires JWT token)
+GET {{baseUrl}}/api/plant
+Authorization: Bearer {{authToken}}
+
+###
+
+# 6. Water a plant (requires JWT token)
+POST {{baseUrl}}/api/plant/{{plantId}}/water
+Authorization: Bearer {{authToken}}
+
+###
+
+# 7. Get plants needing water (requires JWT token)
+GET {{baseUrl}}/api/plant/needing-water
+Authorization: Bearer {{authToken}}
+
+###
+
+# 8. Refresh JWT token
+POST {{baseUrl}}/api/auth/refresh
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+###
+
+### Test Plant Management
+
+# Get specific plant
+GET {{baseUrl}}/api/plant/{{plantId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+# Update plant
+PUT {{baseUrl}}/api/plant/{{plantId}}
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "name": "Monstera Deliciosa Updated",
+  "species": "Monstera",
+  "wateringFrequencyDays": 5,
+  "sunlight": "Bright indirect",
+  "location": "Living room window",
+  "notes": "Updated care notes",
+  "fertilizingFrequencyDays": 25
+}
+
+###
+
+# Fertilize plant
+POST {{baseUrl}}/api/plant/{{plantId}}/fertilize
+Authorization: Bearer {{authToken}}
+
+###
+
+# Get plants needing fertilizer
+GET {{baseUrl}}/api/plant/needing-fertilizer
+Authorization: Bearer {{authToken}}
+
+###
+
+# Delete plant (soft delete)
+DELETE {{baseUrl}}/api/plant/{{plantId}}
+Authorization: Bearer {{authToken}}
+
+###
+
+### Test Public Endpoints
+
+# Health check (no authentication required)
+GET {{baseUrl}}/api/plant/ping
+
+###
+
+### Variables
+@baseUrl = https://localhost:5177
+@authToken = your-jwt-token-here
+@refreshToken = your-refresh-token-here
+@plantId = your-plant-id-here

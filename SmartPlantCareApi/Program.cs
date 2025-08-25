@@ -1,5 +1,8 @@
 using SmartPlantCareApi.Settings;
 using SmartPlantCareApi.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,12 +10,49 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.Configure<PlantDatabaseSettings>(
     builder.Configuration.GetSection("PlantDatabaseSettings"));
 
-// Register the PlantService (we’ll create this next)
+// Bind JWT settings from config
+builder.Services.Configure<JwtSettings>(
+    builder.Configuration.GetSection("JwtSettings"));
+
+// Register services
 builder.Services.AddSingleton<PlantService>();
+builder.Services.AddSingleton<UserService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Configure JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
+Console.WriteLine($"JWT Settings - SecretKey: {(jwtSettings?.SecretKey != null ? "Set" : "NULL")}, Issuer: {jwtSettings?.Issuer}, Audience: {jwtSettings?.Audience}");
+
+if (jwtSettings?.SecretKey != null)
+{
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.ASCII.GetBytes(jwtSettings.SecretKey))
+        };
+    });
+    Console.WriteLine("JWT Authentication configured successfully");
+}
+else
+{
+    Console.WriteLine("WARNING: JWT Authentication not configured - SecretKey is null");
+}
 
 builder.Services.AddCors(options =>
 {
@@ -21,10 +61,10 @@ builder.Services.AddCors(options =>
         {
             builder.WithOrigins("http://localhost:3000")
                    .AllowAnyHeader()
-                   .AllowAnyMethod();
+                   .AllowAnyMethod()
+                   .AllowCredentials();
         });
 });
-
 
 var app = builder.Build();
 
@@ -36,51 +76,11 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseCors("AllowReactApp");
+
+// Add authentication and authorization middleware
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
-app.UseCors("AllowAll");
 
 app.Run();
-
-
-// var builder = WebApplication.CreateBuilder(args);
-
-// // Add services to the container.
-// // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-// builder.Services.AddOpenApi();
-
-// var app = builder.Build();
-
-// // Configure the HTTP request pipeline.
-// if (app.Environment.IsDevelopment())
-// {
-//     app.MapOpenApi();
-// }
-
-// app.UseHttpsRedirection();
-
-// var summaries = new[]
-// {
-//     "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-// };
-
-// app.MapGet("/weatherforecast", () =>
-// {
-//     var forecast =  Enumerable.Range(1, 5).Select(index =>
-//         new WeatherForecast
-//         (
-//             DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-//             Random.Shared.Next(-20, 55),
-//             summaries[Random.Shared.Next(summaries.Length)]
-//         ))
-//         .ToArray();
-//     return forecast;
-// })
-// .WithName("GetWeatherForecast");
-
-// app.Run();
-
-// record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-// {
-//     public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-// }
