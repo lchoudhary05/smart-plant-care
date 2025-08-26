@@ -1,0 +1,100 @@
+name: Deploy Smart Plant Care
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: client/package-lock.json
+
+      - name: Restore backend dependencies
+        run: dotnet restore SmartPlantCareApi/SmartPlantCareApi.csproj
+
+      - name: Build backend
+        run: dotnet build SmartPlantCareApi/SmartPlantCareApi.csproj --no-restore
+
+      - name: Test backend
+        run: dotnet test SmartPlantCareApi/SmartPlantCareApi.csproj --no-build --verbosity normal
+
+      - name: Install frontend dependencies
+        run: npm ci --prefix client
+
+      - name: Build frontend
+        run: npm run build --prefix client
+
+      - name: Test frontend
+        run: npm test --prefix client -- --watchAll=false --passWithNoTests
+
+      - name: Upload frontend build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: client/build/
+
+      - name: Upload backend build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-build
+          path: SmartPlantCareApi/bin/Release/net9.0/
+
+  deploy-backend:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download backend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-build
+          path: backend-build/
+
+      - name: Deploy to Railway (Optional)
+        run: |
+          echo "🚀 Backend build artifacts ready for deployment"
+          echo "📋 Manual deployment steps:"
+          echo "1. Go to railway.app"
+          echo "2. Create new project from GitHub repo"
+          echo "3. Railway will auto-detect Dockerfile"
+          echo "4. Add environment variables"
+          echo "5. Deploy"
+
+  deploy-frontend:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Download frontend artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend-build/
+
+      - name: Deploy to Vercel (Optional)
+        run: |
+          echo "🚀 Frontend build artifacts ready for deployment"
+          echo "📋 Manual deployment steps:"
+          echo "1. Go to vercel.com"
+          echo "2. Import GitHub repository"
+          echo "3. Configure build settings"
+          echo "4. Add environment variables"
+          echo "5. Deploy"
