@@ -125,6 +125,79 @@ export async function addPlant(plant) {
   }
 }
 
+export async function updatePlant(plantId, plantData) {
+  try {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+      throw new Error("No authentication token");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/plant/${plantId}`, {
+      method: "PUT",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(plantData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to update plant");
+    }
+
+    // Handle 204 NoContent response (no body to parse)
+    if (response.status === 204) {
+      return { success: true, message: "Plant updated successfully" };
+    }
+
+    // For other successful responses, try to parse JSON
+    const responseText = await response.text();
+    
+    if (responseText) {
+      return JSON.parse(responseText);
+    } else {
+      return { success: true, message: "Plant updated successfully" };
+    }
+  } catch (error) {
+    console.error("API error:", error);
+    throw error;
+  }
+}
+
+export async function deletePlant(plantId) {
+  try {
+    const token = localStorage.getItem("jwtToken");
+    if (!token) {
+      throw new Error("No authentication token");
+    }
+
+    const response = await fetch(`${API_BASE_URL}/plant/${plantId}`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Failed to delete plant");
+    }
+
+    // Handle 204 NoContent response (no body to parse)
+    if (response.status === 204) {
+      return { success: true, message: "Plant deleted successfully" };
+    }
+
+    // For other successful responses, try to parse JSON
+    return await response.json();
+  } catch (error) {
+    console.error("API error:", error);
+    throw error;
+  }
+}
+
 // Utility function to check if user is authenticated
 export function isAuthenticated() {
   const token = localStorage.getItem("jwtToken");

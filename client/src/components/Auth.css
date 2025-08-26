@@ -181,3 +181,106 @@
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 } 
+
+/* Edit Plant Modal */
+.edit-plant-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.edit-plant-content {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  padding: 30px;
+  width: 100%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.edit-plant-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #f7fafc;
+}
+
+.edit-plant-header h3 {
+  margin: 0;
+  color: #2d3748;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #a0aec0;
+  cursor: pointer;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.close-button:hover {
+  background: #f7fafc;
+  color: #4a5568;
+}
+
+.edit-plant-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 25px;
+}
+
+.edit-plant-actions .auth-button {
+  flex: 1;
+}
+
+/* Secondary Button Style */
+.auth-button.secondary {
+  background: #e2e8f0;
+  color: #4a5568;
+  border: 2px solid #cbd5e0;
+}
+
+.auth-button.secondary:hover:not(:disabled) {
+  background: #cbd5e0;
+  color: #2d3748;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(203, 213, 224, 0.4);
+}
+
+/* Responsive Design for Edit Modal */
+@media (max-width: 768px) {
+  .edit-plant-content {
+    padding: 20px;
+    margin: 10px;
+  }
+  
+  .edit-plant-header h3 {
+    font-size: 1.3rem;
+  }
+  
+  .edit-plant-actions {
+    flex-direction: column;
+  }
+} 

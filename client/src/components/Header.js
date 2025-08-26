@@ -12,7 +12,7 @@ const Header = ({ user, onLogout }) => {
     <header className="header">
       <div className="header-content">
         <div className="header-left">
-          <h1 className="header-title">🌿 Simran baby app</h1>
+          <h1 className="header-title">🌿 Smart Plant Care</h1>
         </div>
 
         {user && (

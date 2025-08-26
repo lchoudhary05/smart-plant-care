@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from "react";
-import { getPlants } from "../api";
+import React, { useState, useEffect } from "react";
+import { getPlants, deletePlant } from "../api";
+import EditPlantForm from "./EditPlantForm";
 import "./PlantList.css";
 
 const PlantList = ({ refresh }) => {
   const [plants, setPlants] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [editingPlant, setEditingPlant] = useState(null);
+  const [deletingPlantId, setDeletingPlantId] = useState(null);
+  const [internalRefresh, setInternalRefresh] = useState(0);
 
   useEffect(() => {
     async function fetchData() {
@@ -24,7 +28,7 @@ const PlantList = ({ refresh }) => {
     }
     
     fetchData();
-  }, [refresh]);
+  }, [refresh, internalRefresh]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "Never";
@@ -48,6 +52,38 @@ const PlantList = ({ refresh }) => {
       return { status: "soon", text: `Water in ${daysUntilWatering} days`, className: "status-soon" };
     } else {
       return { status: "ok", text: `Water in ${daysUntilWatering} days`, className: "status-ok" };
+    }
+  };
+
+  const handleEditPlant = (plant) => {
+    setEditingPlant(plant);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingPlant(null);
+  };
+
+  const handlePlantUpdated = () => {
+    setEditingPlant(null);
+    // Refresh the plant list by incrementing internal refresh counter
+    setInternalRefresh(prev => prev + 1);
+  };
+
+  const handleDeletePlant = async (plantId) => {
+    if (!window.confirm("Are you sure you want to delete this plant? This action cannot be undone.")) {
+      return;
+    }
+
+    setDeletingPlantId(plantId);
+    
+    try {
+      await deletePlant(plantId);
+      // Refresh the plant list by incrementing internal refresh counter
+      setInternalRefresh(prev => prev + 1);
+    } catch (error) {
+      alert("Failed to delete plant: " + error.message);
+    } finally {
+      setDeletingPlantId(null);
     }
   };
 
@@ -89,7 +125,7 @@ const PlantList = ({ refresh }) => {
           const wateringStatus = getWateringStatus(plant);
           
           return (
-            <div key={plant._id} className="plant-card">
+            <div key={plant.id} className="plant-card">
               <div className="plant-header">
                 <h3 className="plant-name">{plant.name}</h3>
                 <span className="plant-species">{plant.species}</span>
@@ -135,10 +171,35 @@ const PlantList = ({ refresh }) => {
                   <strong>Notes:</strong> {plant.notes}
                 </div>
               )}
+
+              <div className="plant-actions">
+                <button 
+                  className="action-button edit-button"
+                  onClick={() => handleEditPlant(plant)}
+                >
+                  ✏️ Edit
+                </button>
+                <button 
+                  className="action-button delete-button"
+                  onClick={() => handleDeletePlant(plant.id)}
+                  disabled={deletingPlantId === plant.id}
+                >
+                  {deletingPlantId === plant.id ? "🗑️ Deleting..." : "🗑️ Delete"}
+                </button>
+              </div>
             </div>
           );
         })}
       </div>
+
+      {/* Edit Plant Modal */}
+      {editingPlant && (
+        <EditPlantForm
+          plant={editingPlant}
+          onPlantUpdated={handlePlantUpdated}
+          onCancel={handleCancelEdit}
+        />
+      )}
     </div>
   );
 };

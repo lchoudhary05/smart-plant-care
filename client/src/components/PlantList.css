@@ -130,6 +130,62 @@
   margin: 0;
 }
 
+/* Plant Actions */
+.plant-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #f7fafc;
+}
+
+.action-button {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.edit-button {
+  background: #ebf8ff;
+  color: #3182ce;
+  border: 1px solid #bee3f8;
+}
+
+.edit-button:hover:not(:disabled) {
+  background: #bee3f8;
+  color: #2c5aa0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(49, 130, 206, 0.2);
+}
+
+.delete-button {
+  background: #fed7d7;
+  color: #c53030;
+  border: 1px solid #feb2b2;
+}
+
+.delete-button:hover:not(:disabled) {
+  background: #feb2b2;
+  color: #a53030;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(197, 48, 48, 0.2);
+}
+
+.action-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .plants-grid {
@@ -149,5 +205,18 @@
   .detail-value {
     text-align: left;
     max-width: 100%;
+  }
+} 
+
+/* Responsive Design for Actions */
+@media (max-width: 768px) {
+  .plant-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .action-button {
+    padding: 10px 12px;
+    font-size: 0.9rem;
   }
 } 
