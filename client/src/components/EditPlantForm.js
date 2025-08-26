@@ -44,7 +44,7 @@ const EditPlantForm = ({ plant, onPlantUpdated, onCancel }) => {
     setIsLoading(true);
 
     try {
-      const result = await updatePlant(plant.id, formData);
+        await updatePlant(plant.id, formData);
       
       // Notify parent component
       if (onPlantUpdated) onPlantUpdated();

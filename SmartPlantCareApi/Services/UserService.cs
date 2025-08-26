@@ -94,7 +94,7 @@ namespace SmartPlantCareApi.Services
             var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
                 ?? _configuration["JwtSettings:SecretKey"];
             
-            var key = Encoding.ASCII.GetBytes(secretKey);
+            var key = Encoding.ASCII.GetBytes(secretKey!);
 
             var claims = new List<Claim>
             {
@@ -108,7 +108,7 @@ namespace SmartPlantCareApi.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["JwtSettings:ExpirationMinutes"])),
+                Expires = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["JwtSettings:ExpirationMinutes"]!)),
                 Issuer = _configuration["JwtSettings:Issuer"],
                 Audience = _configuration["JwtSettings:Audience"],
                 SigningCredentials = new SigningCredentials(
