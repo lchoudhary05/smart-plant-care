@@ -1,7 +1,6 @@
-using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using SmartPlantCareApi.Models;
-using SmartPlantCareApi.Settings;
+using System.Security.Claims;
 
 namespace SmartPlantCareApi.Services
 {
@@ -10,12 +9,28 @@ namespace SmartPlantCareApi.Services
         private readonly IMongoCollection<Plant> _plantCollection;
         private readonly IMongoCollection<User> _userCollection;
 
-        public PlantService(IOptions<PlantDatabaseSettings> plantDbSettings)
+        public PlantService(IConfiguration configuration)
         {
-            var mongoClient = new MongoClient(plantDbSettings.Value.ConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase(plantDbSettings.Value.DatabaseName);
-            _plantCollection = mongoDatabase.GetCollection<Plant>(plantDbSettings.Value.PlantCollectionName);
-            _userCollection = mongoDatabase.GetCollection<User>("Users");
+            var connectionString = Environment.GetEnvironmentVariable("MONGODB_CONNECTION_STRING")
+                ?? configuration.GetConnectionString("MongoDB");
+            
+            var client = new MongoClient(connectionString);
+            
+            var databaseName = Environment.GetEnvironmentVariable("MONGODB_DATABASE_NAME")
+                ?? configuration["MongoDB:DatabaseName"]
+                ?? "SmartPlantCareDb";
+            
+            var plantCollectionName = Environment.GetEnvironmentVariable("MONGODB_PLANT_COLLECTION_NAME")
+                ?? configuration["MongoDB:PlantCollectionName"]
+                ?? "Plants";
+            
+            var userCollectionName = Environment.GetEnvironmentVariable("MONGODB_USER_COLLECTION_NAME")
+                ?? configuration["MongoDB:UserCollectionName"]
+                ?? "Users";
+            
+            var database = client.GetDatabase(databaseName);
+            _plantCollection = database.GetCollection<Plant>(plantCollectionName);
+            _userCollection = database.GetCollection<User>(userCollectionName);
         }
 
         public async Task<List<Plant>> GetUserPlantsAsync(string userId) =>

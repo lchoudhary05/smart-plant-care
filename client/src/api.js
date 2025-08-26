@@ -1,4 +1,5 @@
-const API_BASE_URL = "http://localhost:5177/api";
+// API configuration
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5177/api';
 
 // Authentication API functions
 export async function registerUser(userData) {

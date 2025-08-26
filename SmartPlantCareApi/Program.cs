@@ -1,83 +1,86 @@
-using SmartPlantCareApi.Settings;
-using SmartPlantCareApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using SmartPlantCareApi.Services;
+using SmartPlantCareApi.Settings;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Bind MongoDB settings from config
-builder.Services.Configure<PlantDatabaseSettings>(
-    builder.Configuration.GetSection("PlantDatabaseSettings"));
-
-// Bind JWT settings from config
-builder.Services.Configure<JwtSettings>(
-    builder.Configuration.GetSection("JwtSettings"));
-
-// Register services
-builder.Services.AddSingleton<PlantService>();
-builder.Services.AddSingleton<UserService>();
-
+// Add services to the container.
 builder.Services.AddControllers();
+
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure JWT Authentication
-var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>();
-Console.WriteLine($"JWT Settings - SecretKey: {(jwtSettings?.SecretKey != null ? "Set" : "NULL")}, Issuer: {jwtSettings?.Issuer}, Audience: {jwtSettings?.Audience}");
+// Configure JWT Settings
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 
-if (jwtSettings?.SecretKey != null)
+// Configure MongoDB
+builder.Services.AddSingleton<PlantService>();
+builder.Services.AddSingleton<UserService>();
+
+// Configure CORS
+var corsOrigins = builder.Configuration.GetSection("CorsOrigins").Get<string[]>() ?? new[] { "http://localhost:3000" };
+builder.Services.AddCors(options =>
 {
-    builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
+    options.AddPolicy("AllowSpecificOrigins",
+        policy =>
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings.Issuer,
-            ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.ASCII.GetBytes(jwtSettings.SecretKey))
-        };
-    });
+            policy.WithOrigins(corsOrigins)
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
+        });
+});
+
+// Configure JWT Authentication
+var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") 
+    ?? builder.Configuration["JwtSettings:SecretKey"];
+
+var mongoConnectionString = Environment.GetEnvironmentVariable("MONGODB_CONNECTION_STRING")
+    ?? builder.Configuration["ConnectionStrings:MongoDB"];
+
+if (!string.IsNullOrEmpty(jwtSecretKey))
+{
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
+                ValidAudience = builder.Configuration["JwtSettings:Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
+                ClockSkew = TimeSpan.Zero
+            };
+        });
+
+    Console.WriteLine($"JWT Settings - SecretKey: {(string.IsNullOrEmpty(jwtSecretKey) ? "Not Set" : "Set")}, Issuer: {builder.Configuration["JwtSettings:Issuer"]}, Audience: {builder.Configuration["JwtSettings:Audience"]}");
     Console.WriteLine("JWT Authentication configured successfully");
 }
 else
 {
-    Console.WriteLine("WARNING: JWT Authentication not configured - SecretKey is null");
+    Console.WriteLine("Warning: JWT Settings not configured properly");
 }
-
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowReactApp",
-        builder =>
-        {
-            builder.WithOrigins("http://localhost:3000")
-                   .AllowAnyHeader()
-                   .AllowAnyMethod()
-                   .AllowCredentials();
-        });
-});
 
 var app = builder.Build();
 
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-app.UseCors("AllowReactApp");
+// Use CORS
+app.UseCors("AllowSpecificOrigins");
 
-// Add authentication and authorization middleware
+app.UseHttpsRedirection();
+
 app.UseAuthentication();
 app.UseAuthorization();
 

@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using SmartPlantCareApi.Models;
 using SmartPlantCareApi.Settings;
@@ -13,14 +12,25 @@ namespace SmartPlantCareApi.Services
     public class UserService
     {
         private readonly IMongoCollection<User> _userCollection;
-        private readonly JwtSettings _jwtSettings;
+        private readonly IConfiguration _configuration;
 
-        public UserService(IOptions<PlantDatabaseSettings> plantDbSettings, IOptions<JwtSettings> jwtSettings)
+        public UserService(IConfiguration configuration)
         {
-            var mongoClient = new MongoClient(plantDbSettings.Value.ConnectionString);
-            var mongoDatabase = mongoClient.GetDatabase(plantDbSettings.Value.DatabaseName);
-            _userCollection = mongoDatabase.GetCollection<User>("Users");
-            _jwtSettings = jwtSettings.Value;
+            var connectionString = Environment.GetEnvironmentVariable("MONGODB_CONNECTION_STRING")
+                ?? configuration.GetConnectionString("MongoDB");
+            
+            var databaseName = Environment.GetEnvironmentVariable("MONGODB_DATABASE_NAME")
+                ?? configuration["MongoDB:DatabaseName"]
+                ?? "SmartPlantCareDb";
+            
+            var userCollectionName = Environment.GetEnvironmentVariable("MONGODB_USER_COLLECTION_NAME")
+                ?? configuration["MongoDB:UserCollectionName"]
+                ?? "Users";
+            
+            var client = new MongoClient(connectionString);
+            var database = client.GetDatabase(databaseName);
+            _userCollection = database.GetCollection<User>(userCollectionName);
+            _configuration = configuration;
         }
 
         public async Task<User?> GetByEmailAsync(string email)
@@ -79,7 +89,12 @@ namespace SmartPlantCareApi.Services
         public string GenerateJwtToken(User user)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.ASCII.GetBytes(_jwtSettings.SecretKey);
+            
+            // Get JWT secret from environment variable or fall back to config
+            var secretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+                ?? _configuration["JwtSettings:SecretKey"];
+            
+            var key = Encoding.ASCII.GetBytes(secretKey);
 
             var claims = new List<Claim>
             {
@@ -93,9 +108,9 @@ namespace SmartPlantCareApi.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationMinutes),
-                Issuer = _jwtSettings.Issuer,
-                Audience = _jwtSettings.Audience,
+                Expires = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["JwtSettings:ExpirationMinutes"])),
+                Issuer = _configuration["JwtSettings:Issuer"],
+                Audience = _configuration["JwtSettings:Audience"],
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature)
