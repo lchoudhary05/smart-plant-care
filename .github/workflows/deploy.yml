@@ -29,10 +29,13 @@ jobs:
         run: dotnet restore SmartPlantCareApi/SmartPlantCareApi.csproj
 
       - name: Build backend
-        run: dotnet build SmartPlantCareApi/SmartPlantCareApi.csproj --no-restore
+        run: dotnet build SmartPlantCareApi/SmartPlantCareApi.csproj --no-restore --configuration Release
+
+      - name: Publish backend
+        run: dotnet publish SmartPlantCareApi/SmartPlantCareApi.csproj --no-build --configuration Release --output SmartPlantCareApi/publish
 
       - name: Test backend
-        run: dotnet test SmartPlantCareApi/SmartPlantCareApi.csproj --no-build --verbosity normal
+        run: dotnet test SmartPlantCareApi/SmartPlantCareApi.csproj --no-build --verbosity normal --configuration Release
 
       - name: Install frontend dependencies
         run: npm ci --prefix client
@@ -49,11 +52,18 @@ jobs:
           name: frontend-build
           path: client/build/
 
+      - name: List backend build output
+        run: |
+          echo "🔍 Listing backend build directories:"
+          find SmartPlantCareApi/bin -type d 2>/dev/null || echo "No bin directory found"
+          echo "🔍 Listing SmartPlantCareApi directory:"
+          ls -la SmartPlantCareApi/
+
       - name: Upload backend build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: backend-build
-          path: SmartPlantCareApi/bin/Release/net9.0/
+          path: SmartPlantCareApi/publish/
 
   deploy-backend:
     needs: build-and-test
@@ -66,6 +76,12 @@ jobs:
         with:
           name: backend-build
           path: backend-build/
+
+      - name: Verify backend artifacts
+        run: |
+          echo "🔍 Listing downloaded backend artifacts:"
+          ls -la backend-build/
+          echo "🔍 Backend artifacts downloaded successfully!"
 
       - name: Deploy to Railway (Optional)
         run: |
