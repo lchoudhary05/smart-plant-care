@@ -108,9 +108,16 @@ namespace SmartPlantCareApi.Services
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddMinutes(int.Parse(_configuration["JwtSettings:ExpirationMinutes"]!)),
-                Issuer = _configuration["JwtSettings:Issuer"],
-                Audience = _configuration["JwtSettings:Audience"],
+                Expires = DateTime.UtcNow.AddMinutes(
+                    int.Parse(Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES") 
+                        ?? _configuration["JwtSettings:ExpirationMinutes"] 
+                        ?? "60")),
+                Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER") 
+                    ?? _configuration["JwtSettings:Issuer"] 
+                    ?? "SmartPlantCareApi",
+                Audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") 
+                    ?? _configuration["JwtSettings:Audience"] 
+                    ?? "SmartPlantCareApp",
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
                     SecurityAlgorithms.HmacSha256Signature)
