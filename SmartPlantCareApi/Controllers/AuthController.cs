@@ -55,8 +55,10 @@ namespace SmartPlantCareApi.Controllers
             {
                 return BadRequest(new { message = ex.Message });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Registration error: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return StatusCode(500, new { message = "An error occurred during registration" });
             }
         }
@@ -108,8 +110,10 @@ namespace SmartPlantCareApi.Controllers
 
                 return Ok(response);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"Login error: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return StatusCode(500, new { message = "An error occurred during login" });
             }
         }
@@ -144,8 +148,10 @@ namespace SmartPlantCareApi.Controllers
 
                 return Ok(profile);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"GetProfile error: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return StatusCode(500, new { message = "An error occurred while fetching profile" });
             }
         }
@@ -191,8 +197,10 @@ namespace SmartPlantCareApi.Controllers
 
                 return Ok(response);
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Console.WriteLine($"RefreshToken error: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return StatusCode(500, new { message = "An error occurred while refreshing token" });
             }
         }

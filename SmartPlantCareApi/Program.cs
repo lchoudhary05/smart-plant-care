@@ -21,7 +21,10 @@ builder.Services.AddSingleton<PlantService>();
 builder.Services.AddSingleton<UserService>();
 
 // Configure CORS
-var corsOrigins = builder.Configuration.GetSection("CorsOrigins").Get<string[]>() ?? new[] { "http://localhost:3000" };
+var corsOrigins = Environment.GetEnvironmentVariable("CORS_ORIGINS")?.Split(',') 
+    ?? builder.Configuration.GetSection("CorsOrigins").Get<string[]>() 
+    ?? new[] { "http://localhost:3000" };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowSpecificOrigins",
@@ -38,6 +41,14 @@ builder.Services.AddCors(options =>
 var jwtSecretKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY") 
     ?? builder.Configuration["JwtSettings:SecretKey"];
 
+var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") 
+    ?? builder.Configuration["JwtSettings:Issuer"] 
+    ?? "SmartPlantCareApi";
+
+var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") 
+    ?? builder.Configuration["JwtSettings:Audience"] 
+    ?? "SmartPlantCareApp";
+
 var mongoConnectionString = Environment.GetEnvironmentVariable("MONGODB_CONNECTION_STRING")
     ?? builder.Configuration["ConnectionStrings:MongoDB"];
 
@@ -52,14 +63,14 @@ if (!string.IsNullOrEmpty(jwtSecretKey))
                 ValidateAudience = true,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
-                ValidAudience = builder.Configuration["JwtSettings:Audience"],
+                ValidIssuer = jwtIssuer,
+                ValidAudience = jwtAudience,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecretKey)),
                 ClockSkew = TimeSpan.Zero
             };
         });
 
-    Console.WriteLine($"JWT Settings - SecretKey: {(string.IsNullOrEmpty(jwtSecretKey) ? "Not Set" : "Set")}, Issuer: {builder.Configuration["JwtSettings:Issuer"]}, Audience: {builder.Configuration["JwtSettings:Audience"]}");
+    Console.WriteLine($"JWT Settings - SecretKey: {(string.IsNullOrEmpty(jwtSecretKey) ? "Not Set" : "Set")}, Issuer: {jwtIssuer}, Audience: {jwtAudience}");
     Console.WriteLine("JWT Authentication configured successfully");
 }
 else
